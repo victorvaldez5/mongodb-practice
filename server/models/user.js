@@ -32,6 +32,7 @@ var UserSchema = new mongoose.Schema({
   }]
 });
 
+// methods makes functions that can be used only the instance model
 // override toJSON method so that it leaves out the password when it is returned
 UserSchema.methods.toJSON = function() {
   var user = this;
@@ -51,6 +52,24 @@ UserSchema.methods.generateAuthToken = function () {
     return token;
   })
 };
+
+// statics makes model methods that can be used by all Models
+UserSchema.statics.findByToken = function (token) {
+  var User = this;
+  var decoded;
+
+  try {
+    decoded = jwt.verify(token, 'abc123');
+  } catch (e) {
+    return Promise.reject();
+  }
+
+  return User.findOne({
+    '_id': decoded._id,
+    'tokens.token': token,
+    'tokens.access': 'auth'
+  });
+}
 
 var User = mongoose.model('User', UserSchema);
 
